@@ -70,7 +70,7 @@ class ApacheBase(object):
         options.setdefault("indexes", "off")
 
         # Record a SHA1 of the template we use, so we can detect changes in subsequent runs
-        self.options["__hashes_template"] = sha1(open(self.options["template"]).read()).hexdigest()
+        self.options["__hashes_template"] = sha1(open(self.options["template"]).read().encode('utf8')).hexdigest()
 
         # Prod the filter if we have one, to fix dependency graph
         # Look into some better way of doing this after jinja2 refactor
