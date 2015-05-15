@@ -18,7 +18,7 @@ The script accepts buildout command-line options, so you can
 use the -c option to specify an alternate configuration file.
 """
 
-import os, shutil, sys, tempfile, textwrap, urllib, urllib2, subprocess
+import os, shutil, sys, tempfile, textwrap, urllib.request, urllib.parse, urllib.error, urllib.request, urllib.error, urllib.parse, subprocess
 from optparse import OptionParser
 
 if sys.platform == 'win32':
@@ -50,7 +50,7 @@ if not has_broken_dash_S and 'site' in sys.modules:
     # We will restart with python -S.
     args = sys.argv[:]
     args[0:0] = [sys.executable, '-S']
-    args = map(quote, args)
+    args = list(map(quote, args))
     os.execv(sys.executable, args)
 # Now we are running with -S.  We'll get the clean sys.path, import site
 # because distutils will do it later, and then reset the path and clean
@@ -59,7 +59,7 @@ if not has_broken_dash_S and 'site' in sys.modules:
 clean_path = sys.path[:]
 import site
 sys.path[:] = clean_path
-for k, v in sys.modules.items():
+for k, v in list(sys.modules.items()):
     if k in ('setuptools', 'pkg_resources') or (
         hasattr(v, '__path__') and
         len(v.__path__)==1 and
@@ -77,7 +77,7 @@ def normalize_to_url(option, opt_str, value, parser):
     if value:
         if '://' not in value: # It doesn't smell like a URL.
             value = 'file://%s' % (
-                urllib.pathname2url(
+                urllib.request.pathname2url(
                     os.path.abspath(os.path.expanduser(value))),)
         if opt_str == '--download-base' and not value.endswith('/'):
             # Download base needs a trailing slash to make the world happy.
@@ -161,10 +161,10 @@ try:
     if not hasattr(pkg_resources, '_distribute'):
         raise ImportError
 except ImportError:
-    ez_code = urllib2.urlopen(
+    ez_code = urllib.request.urlopen(
         options.setup_source).read().replace('\r\n', '\n')
     ez = {}
-    exec ez_code in ez
+    exec(ez_code, ez)
     setup_args = dict(to_dir=eggs_dir, download_delay=0)
     if options.download_base:
         setup_args['download_base'] = options.download_base
@@ -257,21 +257,21 @@ if exitcode != 0:
 ws.add_entry(eggs_dir)
 try:
     ws.require(requirement)
-except pkg_resources.DistributionNotFound, e:
+except pkg_resources.DistributionNotFound as e:
     if e.args[0].project_name == 'zc.buildout':
-        print "Couldn't install %s." % str(e.args[0])
-        print "This could be due to you having a system-installed " \
-              "python-zc.buildout package."
-        print "I'm going to attempt to bootstrap your project using the system buildout"
+        print("Couldn't install %s." % str(e.args[0]))
+        print("This could be due to you having a system-installed " \
+              "python-zc.buildout package.")
+        print("I'm going to attempt to bootstrap your project using the system buildout")
 
         argstring = ",".join("'%s'" % a for a in args)
         cmd = [sys.executable, "-c", "import zc.buildout.buildout; zc.buildout.buildout.main([%s])" % argstring]
-        print subprocess.list2cmdline(cmd)
+        print(subprocess.list2cmdline(cmd))
         exitcode = subprocess.Popen(cmd).wait()
         if exitcode != 0:
             sys.stdout.flush()
             sys.stderr.flush()
-            print "An error occurred - i think you should remove the system installed buildout"
+            print("An error occurred - i think you should remove the system installed buildout")
             sys.exit(1)
         sys.exit(0)
     raise
